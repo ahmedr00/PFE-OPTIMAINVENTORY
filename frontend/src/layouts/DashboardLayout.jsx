@@ -101,7 +101,10 @@ const DashboardLayout = () => {
 
         {/* User Profile */}
         <div className="p-4 border-t border-slate-700">
-          <div className="flex items-center gap-3 mb-4">
+          <div
+            className="flex items-center gap-3 mb-4"
+            onClick={() => navigate("/app/profile")}
+          >
             <Avatar>
               <AvatarFallback className="bg-emerald-500">
                 {getInitials(user?.name)}

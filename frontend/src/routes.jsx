@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate, redirect } from "react-router-dom";
 import LandingPage from "./Pages/LandingPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Dashboard from "./Pages/Dashboard";
@@ -18,22 +18,31 @@ import SignUpPage from "./Pages/SignUpPage";
 import EmailVerificationPage from "./Pages/EmailVerificationPage";
 import { useAuthStore } from "./store/authStore";
 import CreateSheetUI from "./Pages/CreateSheetUI";
-/*import ForgotPassword from "./Pages/ForgotPassword";*/
+import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
+import ResetPasswordPage from "./Pages/ResetPasswordPage";
+import ProfileInfoPage from "./Pages/ProfileInfoPage";
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
-    if (!user.isVerified) {
-      return <Navigate to="/verify-email" />;
-    }
-    return children;
   }
+  return children;
 };
 const RedirectAuthenticatedUser = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
   if (isAuthenticated) {
     console.log("isAuthenticated", isAuthenticated);
     return <Navigate to="/app" replace />;
+  }
+  switch (user?.role) {
+    case "Admin":
+      return <Navigate to="/app" replace />;
+    case "Gestionnaire":
+      return <Navigate to="/app" replace />;
+    case "Compteur":
+      return <Navigate to="/mobile" replace />;
+    default:
+      break;
   }
   return children;
 };
@@ -73,15 +82,89 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: "/forgot-password",
+    element: (
+      <RedirectAuthenticatedUser>
+        <ForgotPasswordPage />
+      </RedirectAuthenticatedUser>
+    ),
+  },
+  {
+    path: "/reset-password/:token",
+    element: (
+      <RedirectAuthenticatedUser>
+        <ResetPasswordPage />
+      </RedirectAuthenticatedUser>
+    ),
+  },
+
+  {
     path: "/app",
+
     element: <DashboardLayout />,
     children: [
-      { index: true, element: <Dashboard /> },
-      { path: "sheets", element: <InventorySheet /> },
-      { path: "sheets/:id", element: <SheetDetails /> },
-      { path: "sync", element: <SyncSage /> },
-      { path: "users", element: <Users /> },
-      { path: "reports", element: <Reports /> },
+      {
+        index: true,
+        element: (
+          <ProtectedRoute>
+            {" "}
+            <Dashboard />{" "}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "sheets",
+        element: (
+          <ProtectedRoute>
+            {" "}
+            <InventorySheet />{" "}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "sheets/:id",
+        element: (
+          <ProtectedRoute>
+            {" "}
+            <SheetDetails />{" "}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "sync",
+        element: (
+          <ProtectedRoute>
+            {" "}
+            <SyncSage />{" "}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "users",
+        element: (
+          <ProtectedRoute>
+            {" "}
+            <Users />{" "}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "reports",
+        element: (
+          <ProtectedRoute>
+            {" "}
+            <Reports />{" "}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "profile",
+        element: (
+          <ProtectedRoute>
+            <ProfileInfoPage />
+          </ProtectedRoute>
+        ),
+      },
     ],
   },
   {
