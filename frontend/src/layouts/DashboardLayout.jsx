@@ -102,7 +102,7 @@ const DashboardLayout = () => {
         {/* User Profile */}
         <div className="p-4 border-t border-slate-700">
           <div
-            className="flex items-center gap-3 mb-4"
+            className="flex items-center gap-3 mb-4 cursor-pointer hover:bg-slate-800  rounded-lg transition-colors"
             onClick={() => navigate("/app/profile")}
           >
             <Avatar>
@@ -110,9 +110,9 @@ const DashboardLayout = () => {
                 {getInitials(user?.name)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="font-medium">{user?.name || "Client Admin"}</p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 truncate w-full ">
                 {user?.email || "admin@company.fr"}
               </p>
             </div>
@@ -140,7 +140,7 @@ const DashboardLayout = () => {
                 Système intégré avec Sage 100
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap--4">
               <Button variant="outline" size="icon" className="relative">
                 <Bell className="w-5 h-5" />
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500">

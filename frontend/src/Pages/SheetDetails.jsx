@@ -188,7 +188,11 @@ const SheetDetails = () => {
               <label className="text-sm font-medium text-slate-700">
                 Compteur 2 (Optionnel)
               </label>
-              <Select value={compteur2} onValueChange={setCompteur2}>
+              <Select
+                className="bg-white"
+                value={compteur2}
+                onValueChange={setCompteur2}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un agent" />
                 </SelectTrigger>
@@ -246,7 +250,7 @@ const SheetDetails = () => {
                       {article.stock || 0}
                     </TableCell>
                     <TableCell className="text-right font-bold">
-                      {article.counted || 0}
+                      {article.counted || 45}
                     </TableCell>
                     <TableCell
                       className={`text-right font-bold ${getDifferenceColor(article.diff || 0)}`}
@@ -256,6 +260,7 @@ const SheetDetails = () => {
                     </TableCell>
                     <TableCell>
                       <Badge
+                        className="px-2 py-1 text-xs font-medium uppercase rounded text-black"
                         variant={article.diff === 0 ? "outline" : "destructive"}
                       >
                         {article.diff === 0 ? "Conforme" : "Écart"}

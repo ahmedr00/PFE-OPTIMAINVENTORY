@@ -166,7 +166,7 @@ const InventorySheet = () => {
               {!loading &&
                 filteredSheets.map((sheet) => (
                   <TableRow
-                    key={sheet._id} // Using MongoDB _id
+                    key={sheet._id}
                     className="cursor-pointer hover:bg-slate-50"
                     onClick={() => navigate(`/app/sheets/${sheet._id}`)}
                   >
@@ -205,9 +205,11 @@ const InventorySheet = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       {sheet.ecarts > 0 ? (
-                        <Badge variant="destructive">{sheet.ecarts}</Badge>
+                        <Badge variant="destructive text-black">
+                          {sheet.ecarts}
+                        </Badge>
                       ) : (
-                        <span className="text-slate-400">0</span>
+                        <span className="text-slate-400"></span>
                       )}
                     </TableCell>
                     <TableCell>

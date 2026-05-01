@@ -227,20 +227,20 @@ const LandingPage = () => {
           <section id="demo" className="bg-muted px-6 py-20 lg:px-12">
             <div className="p-8 ">
               <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-green-400 to-emerald-500 text-transparent bg-clip-text">
-                Create Account
+                Demandez une Démo Gratuite
               </h2>
               <form onSubmit={handleSignUp}>
                 <Input
                   icon={User}
                   type="text"
-                  placeholder="Full Name"
+                  placeholder="Nom Complet"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
                 <Input
                   icon={Mail}
                   type="email"
-                  placeholder="Email Adress"
+                  placeholder="Email Address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
