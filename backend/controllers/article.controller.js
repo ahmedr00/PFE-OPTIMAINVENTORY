@@ -11,8 +11,8 @@ export const getAllArticles = async (req, res) => {
 };
 export const createArticle = async (req, res) => {
   try {
-    const { reference, designation, stock, prix } = req.body;
-    const article = new Article({ reference, designation, stock, prix });
+    const { reference, designation, stock } = req.body;
+    const article = new Article({ reference, designation, stock });
     await article.save();
     res.status(201).json({ article });
   } catch (error) {

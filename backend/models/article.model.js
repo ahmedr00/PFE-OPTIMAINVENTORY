@@ -14,10 +14,6 @@ const articleSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  prix: {
-    type: Number,
-    required: true,
-  },
 });
 const Article = mongoose.model("Article", articleSchema);
 

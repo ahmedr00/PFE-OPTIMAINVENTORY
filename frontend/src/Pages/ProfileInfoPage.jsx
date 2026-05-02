@@ -14,9 +14,11 @@ import {
 } from "lucide-react";
 import { Button } from "../components/Button";
 import { useAuthStore } from "../store/authStore";
+import { useNavigate } from "react-router-dom";
 
 const ProfileInfoPage = () => {
-  const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
   const userProfile = {
     name: user?.name || "Marie Dubois",
     email: user?.email || "marie.dubois@company.fr",
@@ -36,6 +38,11 @@ const ProfileInfoPage = () => {
       .join("")
       .toUpperCase()
       .substring(0, 2);
+  };
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    await logout();
+    navigate("/login");
   };
   return (
     <div className="p-4 space-y-4">
@@ -135,7 +142,11 @@ const ProfileInfoPage = () => {
       {/* Actions */}
       <Card>
         <CardContent className="p-4 space-y-2">
-          <Button variant="outline" className="w-full justify-start h-12">
+          <Button
+            onClick={() => navigate("/app/settings")}
+            variant="outline"
+            className="w-full justify-start h-12"
+          >
             <Settings className="w-5 h-5 mr-3" />
             Paramètres
           </Button>
@@ -149,6 +160,9 @@ const ProfileInfoPage = () => {
       <Button
         variant="outline"
         className="w-full h-12 text-red-600 border-red-300 hover:bg-red-50"
+        onClick={(e) => {
+          handleLogout(e);
+        }}
       >
         <LogOut className="w-5 h-5 mr-2" />
         Déconnexion

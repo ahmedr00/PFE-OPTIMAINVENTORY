@@ -85,8 +85,14 @@ const Dashboard = () => {
     id: sheet._id,
     name: sheet.name,
     status: sheet.status,
-    compteur: sheet.compteur,
-    progress: sheet.progress,
+    compteur:
+      sheet.assignedCompteurs && sheet.assignedCompteurs.length > 0
+        ? sheet.assignedCompteurs[0]
+        : "Non assigné",
+    progress:
+      sheet.countedArticles && sheet.totalArticles
+        ? Math.round((sheet.countedArticles / sheet.totalArticles) * 100)
+        : 0,
   }));
   /*console.log(
   new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit' }).format(new Date(sheets[0]?.createdAt)))*/

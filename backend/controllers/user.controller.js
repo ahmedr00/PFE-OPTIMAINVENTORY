@@ -3,6 +3,7 @@ import { User } from "../models/user.model.js";
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({});
+
     res.status(200).json({ success: true, users });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -61,5 +62,14 @@ export const deleteUser = async (req, res) => {
     res.json(deletedUser);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+export const getCounters = async (req, res) => {
+  try {
+    // Logic: Find all users where role is strictly 'compteur'
+    const compteurs = await User.find({ role: "Compteur" });
+    res.status(200).json(compteurs);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching compteurs", error });
   }
 };

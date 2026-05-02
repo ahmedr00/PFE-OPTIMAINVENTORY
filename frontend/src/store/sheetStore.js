@@ -18,14 +18,13 @@ export const useSheetStore = create((set) => ({
       set({ error: error.message, loading: false });
     }
   },
-  createSheet: async (name, totalArticles, progress) => {
+  createSheet: async (formData) => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.post(`${API_URL_SHEET}/create-sheet`, {
-        name,
-        totalArticles,
-        progress,
-      });
+      const response = await axios.post(
+        `${API_URL_SHEET}/create-sheet`,
+        formData,
+      );
       set((state) => ({
         sheets: [...state.sheets, response.data.sheet],
         loading: false,
@@ -40,6 +39,32 @@ export const useSheetStore = create((set) => ({
       await axios.delete(`${API_URL_SHEET}/${id}`);
       set((state) => ({
         sheets: state.sheets.filter((sheet) => sheet._id !== id),
+        loading: false,
+      }));
+    } catch (error) {
+      set({ error: error.message, loading: false });
+    }
+  },
+  getSingleSheet: async (id) => {
+    set({ loading: true });
+    try {
+      const response = await axios.get(`${API_URL_SHEET}/${id}`);
+      set({ currentSheet: response.data.sheet, loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+    }
+  },
+  assignCompteur: async (sheetId, compteurName) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.put(`${API_URL_SHEET}/${sheetId}`, {
+        compteurName,
+      });
+      // Update the local sheet data with the response from the backend
+      set((state) => ({
+        sheets: state.sheets.map((sheet) =>
+          sheet._id === sheetId ? response.data.sheet : sheet,
+        ),
         loading: false,
       }));
     } catch (error) {

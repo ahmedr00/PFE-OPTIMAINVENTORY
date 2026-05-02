@@ -6,6 +6,7 @@ axios.defaults.withCredentials = true;
 
 export const useUserStore = create((set) => ({
   users: [],
+  counters: [],
   loading: false,
   error: null,
 
@@ -82,6 +83,21 @@ export const useUserStore = create((set) => ({
         error: error.response?.data?.message || "Erreur lors de la mise à jour",
         loading: false,
       });
+    }
+  },
+  fetchCounters: async () => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL_USERS}/get-counters`);
+      set({ counters: response.data, loading: false });
+      console.log("Fetched counters:", response.data);
+      return response.data;
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || "Erreur lors du chargement",
+        loading: false,
+      });
+      throw error;
     }
   },
 }));

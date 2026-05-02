@@ -156,7 +156,7 @@ const InventorySheet = () => {
                 <TableHead>Nom de la Fiche</TableHead>
                 <TableHead>Date Création</TableHead>
                 <TableHead>Statut</TableHead>
-                <TableHead>Compteur 1</TableHead>
+                <TableHead>Compteurs</TableHead>
                 <TableHead className="text-right">Articles</TableHead>
                 <TableHead className="text-right">Écarts</TableHead>
                 <TableHead></TableHead>
@@ -190,7 +190,16 @@ const InventorySheet = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {sheet.compteur1 || (
+                      {sheet.assignedCompteurs &&
+                      sheet.assignedCompteurs.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {sheet.assignedCompteurs.map((compteur, index) => (
+                            <Badge key={index} variant="secondary">
+                              {compteur}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
                         <span className="text-slate-400">Non assigné</span>
                       )}
                     </TableCell>

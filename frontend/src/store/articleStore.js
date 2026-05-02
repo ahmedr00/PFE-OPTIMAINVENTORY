@@ -17,4 +17,14 @@ export const useArticleStore = create((set) => ({
       set({ error: error.message, loading: false });
     }
   },
+  fetchArticleById: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL_ARTICLES}/${id}`);
+      const article = response.data.article || null;
+      set({ article, loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+    }
+  },
 }));

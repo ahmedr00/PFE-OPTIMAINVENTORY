@@ -21,6 +21,7 @@ import CreateSheetUI from "./Pages/CreateSheetUI";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
 import ProfileInfoPage from "./Pages/ProfileInfoPage";
+import SettingsPage from "./Pages/SettingsPage";
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) {
@@ -164,6 +165,10 @@ export const router = createBrowserRouter([
             <ProfileInfoPage />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: "settings",
+        element: <SettingsPage />,
       },
     ],
   },

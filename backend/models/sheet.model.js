@@ -9,12 +9,18 @@ const sheetSchema = new mongoose.Schema(
     status: {
       type: String,
     },
-    compteur1: {
-      type: String,
-    },
-    compteur2: {
-      type: String,
-    },
+    articles: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Article",
+      },
+    ],
+    assignedCompteurs: [
+      {
+        type: String,
+      },
+    ],
+
     progress: {
       type: Number,
       default: 0,
