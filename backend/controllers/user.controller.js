@@ -15,7 +15,7 @@ export const createUser = async (req, res) => {
     const newUser = new User({
       name,
       email,
-      password: password || "defaultpassword",
+      password: await bcryptjs.hash("password", 10),
     });
     await newUser.save();
     res.status(201).json(newUser);
