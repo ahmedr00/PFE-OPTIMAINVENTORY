@@ -8,6 +8,22 @@ const sheetSchema = new mongoose.Schema(
     },
     status: {
       type: String,
+      enum: ["draft", "pending", "in_progress", "completed", "validated"],
+      default: "in_progress",
+    },
+    priority: {
+      type: String,
+      enum: ["Basse", "Normale", "Haute"],
+      default: "Normale",
+    },
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    assignedDate: {
+      type: Date,
+      default: Date.now,
     },
     articles: [
       {
@@ -18,6 +34,7 @@ const sheetSchema = new mongoose.Schema(
     assignedCompteurs: [
       {
         type: String,
+        trim: true,
       },
     ],
 
@@ -37,11 +54,36 @@ const sheetSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    compteur1: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    compteur2: {
+      type: String,
+      default: "",
+      trim: true,
+    },
   },
 
   {
     timestamps: true,
   },
 );
+
+sheetSchema.pre("validate", function normalizeSheetFields(next) {
+  this.assignedCompteurs = [...new Set((this.assignedCompteurs || []).filter(Boolean))];
+  this.totalArticles = this.totalArticles || this.articles?.length || 0;
+  this.progress = this.totalArticles
+    ? Math.round(((this.countedArticles || 0) / this.totalArticles) * 100)
+    : 0;
+
+  if (this.totalArticles > 0 && this.countedArticles >= this.totalArticles) {
+    this.status = this.ecarts > 0 ? "in_progress" : "completed";
+  }
+
+  next();
+});
+
 const Sheet = mongoose.model("Sheet", sheetSchema);
 export default Sheet;

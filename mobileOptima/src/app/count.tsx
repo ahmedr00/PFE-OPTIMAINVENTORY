@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,9 +6,11 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { useSheetStore } from "./store/sheetStore";
 // import {
 //   AlertTriangle,
 //   ArrowLeft,
@@ -21,69 +23,146 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 const { width } = Dimensions.get("window");
 
 const count = () => {
+  console.log("hi");
+
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const sheetId = Array.isArray(id) ? id[0] : id;
+  const {
+    sheets,
+    currentSheet,
+    fetchSheets,
+    getSingleSheet,
+    loading,
+    updateArticleCount,
+  } = useSheetStore();
   const [currentArticleIndex, setCurrentArticleIndex] = useState(0);
   const [quantity, setQuantity] = useState("");
 
-  // Mock articles derived from the original inventory source
-  const articles = [
-    {
-      id: "ART-001",
-      reference: "REF-12345",
-      designation: "Ordinateur Portable HP",
-      location: "Zone A-12",
-      counted: null,
-    },
-    {
-      id: "ART-002",
-      reference: "REF-12346",
-      designation: "Souris Sans Fil Logitech",
-      location: "Zone B-05",
-      counted: 125,
-    },
-    {
-      id: "ART-003",
-      reference: "REF-12347",
-      designation: "Clavier Mécanique",
-      location: "Zone A-08",
-      counted: 75,
-    },
-    {
-      id: "ART-004",
-      reference: "REF-12348",
-      designation: "Écran 24 pouces Dell",
-      location: "Zone C-03",
-      counted: null,
-    },
-  ];
+  useEffect(() => {
+    if (!sheets.length) {
+      fetchSheets();
+    }
+  }, [fetchSheets, sheets.length]);
+
+  const sheetFromList = sheets.find((sheet: any) => sheet._id === sheetId);
+  const selectedSheet =
+    currentSheet?._id === sheetId ? currentSheet : sheetFromList;
+  const needsArticleDetails =
+    !!sheetId &&
+    (!selectedSheet ||
+      !Array.isArray(selectedSheet.articles) ||
+      selectedSheet.articles.some(
+        (article: any) => typeof article === "string",
+      ));
+
+  useEffect(() => {
+    if (sheetId && needsArticleDetails) {
+      getSingleSheet(sheetId);
+    }
+  }, [getSingleSheet, needsArticleDetails, sheetId]);
+
+  useEffect(() => {
+    setCurrentArticleIndex(0);
+    setQuantity("");
+  }, [sheetId]);
+
+  const articles =
+    selectedSheet?.articles
+      ?.filter((article: any) => article && typeof article === "object")
+      .map((article: any, index: number) => ({
+        id: article._id || article.id || `${sheetId}-${index}`,
+        reference: article.reference || "Sans référence",
+        designation: article.designation || "Article sans désignation",
+        location:
+          article.location ||
+          (article.stock !== undefined
+            ? `Stock théorique: ${article.stock}`
+            : ""),
+        counted: article.counted ?? null,
+      })) || [];
 
   const currentArticle = articles[currentArticleIndex];
   const totalArticles = articles.length;
-  const countedArticles = articles.filter((a) => a.counted !== null).length;
-  const progress = (countedArticles / totalArticles) * 100;
+  const countedArticles =
+    selectedSheet?.countedArticles ??
+    articles.filter((a: any) => a.counted !== null).length;
+  const progress = totalArticles ? (countedArticles / totalArticles) * 100 : 0;
 
   const handleNumberClick = (num: string) => setQuantity((prev) => prev + num);
   const handleClear = () => setQuantity("");
   const handleBackspace = () => setQuantity((prev) => prev.slice(0, -1));
 
-  const handleValidate = () => {
-    if (!quantity) return;
+  // const handleValidate = () => {
+  //   if (!quantity || !currentArticle) return;
 
-    // Workflow Logic: Data submission
-    console.log("WORKFLOW - Consolidation:", {
-      articleId: currentArticle.id,
-      countedQuantity: parseInt(quantity),
-      timestamp: new Date().toISOString(),
-    });
+  //   // Workflow Logic: Data submission
+  //   console.log("WORKFLOW - Consolidation:", {
+  //     sheetId,
+  //     articleId: currentArticle.id,
+  //     countedQuantity: parseInt(quantity),
+  //     timestamp: new Date().toISOString(),
+  //   });
 
-    if (currentArticleIndex < totalArticles - 1) {
-      setCurrentArticleIndex((prev) => prev + 1);
-      setQuantity("");
+  //   if (currentArticleIndex < totalArticles - 1) {
+  //     setCurrentArticleIndex((prev) => prev + 1);
+  //     setQuantity("");
+  //   } else {
+  //     router.push("/(tabs)/home");
+  //   }
+  // };
+  const handleValidate = async () => {
+    if (!quantity || !currentArticle) {
+      Alert.alert("Attention", "Veuillez saisir une quantité.");
+      return;
+    }
+
+    const success = await updateArticleCount(
+      sheetId,
+      currentArticle.id,
+      quantity,
+    );
+
+    if (success) {
+      if (currentArticleIndex < totalArticles - 1) {
+        // Move to next article[cite: 5]
+        setCurrentArticleIndex((prev) => prev + 1);
+        setQuantity("");
+      } else {
+        // Inventory finished[cite: 5]
+        Alert.alert("Succès", "Inventaire terminé !", [
+          { text: "OK", onPress: () => router.push("/home") },
+        ]);
+      }
     } else {
-      //   router.push("/mobile");
+      Alert.alert("Erreur", "Problème lors de la sauvegarde.");
     }
   };
+
+  if (!selectedSheet || !currentArticle) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backButton}
+            >
+              {/* <ArrowLeft color="#0f172a" size={24} /> */}
+            </TouchableOpacity>
+            <View>
+              <Text style={styles.headerTitle}>Comptage</Text>
+              <Text style={styles.headerSubtitle}>
+                {loading
+                  ? "Chargement des articles..."
+                  : "Aucun article trouvé"}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -97,11 +176,19 @@ const count = () => {
             {/* <ArrowLeft color="#0f172a" size={24} /> */}
           </TouchableOpacity>
           <View>
-            <Text style={styles.headerTitle}>Comptage {id}</Text>
+            <Text style={styles.headerTitle}>
+              Comptage {selectedSheet.name}
+            </Text>
             <Text style={styles.headerSubtitle}>
               Article {currentArticleIndex + 1} sur {totalArticles}
             </Text>
           </View>
+          {/* <TouchableOpacity
+            onPress={() => router.push("/home")}
+            style={styles.closeButton}
+          >
+            <Text style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity> */}
         </View>
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
@@ -116,9 +203,11 @@ const count = () => {
         <View style={styles.card}>
           <Text style={styles.designation}>{currentArticle.designation}</Text>
           <Text style={styles.reference}>Réf: {currentArticle.reference}</Text>
-          <View style={styles.locationBadge}>
-            <Text style={styles.locationText}>{currentArticle.location}</Text>
-          </View>
+          {!!currentArticle.location && (
+            <View style={styles.locationBadge}>
+              <Text style={styles.locationText}>{currentArticle.location}</Text>
+            </View>
+          )}
         </View>
 
         {/* Quantity Display[cite: 5] */}
@@ -201,18 +290,18 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#f8fafc" },
   header: {
     backgroundColor: "white",
-    padding: 16,
+    padding: 12, // Reduced from 16
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
   },
-  headerTop: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
+  headerTop: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   backButton: { marginRight: 12 },
   headerTitle: { fontSize: 18, fontWeight: "bold", color: "#0f172a" },
   headerSubtitle: { fontSize: 12, color: "#64748b" },
   progressTrack: {
-    height: 8,
+    height: 6, // Slimmer progress bar
     backgroundColor: "#f1f5f9",
-    borderRadius: 4,
+    borderRadius: 3,
     overflow: "hidden",
   },
   progressFill: { height: "100%", backgroundColor: "#10b981" },
@@ -220,71 +309,86 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#64748b",
     textAlign: "center",
-    marginTop: 4,
+    marginTop: 2,
   },
-  container: { padding: 16 },
+
+  // closeButton: {
+  //   padding: 10,
+  //   backgroundColor: "#f1f5f9", // Light gray circle effect
+  //   borderRadius: 20,
+  //   width: 40,
+  //   height: 40,
+  //   justifyContent: "flex-end",
+  //   alignItems: "flex-end",
+  // },
+  // closeButtonText: {
+  //   fontSize: 18,
+  //   fontWeight: "bold",
+  //   color: "#64748b",
+  // },
+  container: { padding: 12 }, // Reduced padding
   card: {
     backgroundColor: "white",
-    padding: 16,
+    padding: 12,
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 8,
     elevation: 1,
   },
   designation: {
-    fontSize: 18,
+    fontSize: 16, // Slightly smaller
     fontWeight: "bold",
     color: "#0f172a",
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  reference: { fontSize: 14, color: "#64748b", marginBottom: 8 },
+  reference: { fontSize: 13, color: "#64748b", marginBottom: 4 },
   locationBadge: {
     alignSelf: "flex-start",
     backgroundColor: "#f1f5f9",
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 2,
     borderRadius: 4,
   },
-  locationText: { fontSize: 12, color: "#475569", fontWeight: "600" },
+  locationText: { fontSize: 11, color: "#475569", fontWeight: "600" },
   quantityDisplay: {
     backgroundColor: "#ecfdf5",
-    padding: 24,
+    padding: 12, // Significant reduction from 24
     borderRadius: 12,
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: "#a7f3d0",
   },
-  quantityLabel: { fontSize: 14, color: "#047857", marginBottom: 8 },
-  quantityValue: { fontSize: 48, fontWeight: "bold", color: "#064e3b" },
+  quantityLabel: { fontSize: 12, color: "#047857", marginBottom: 4 },
+  quantityValue: { fontSize: 36, fontWeight: "bold", color: "#064e3b" }, // Smaller font
   numPad: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 8,
   },
   numButton: {
-    width: (width - 56) / 3,
-    height: 60,
+    width: (width - 40) / 3, // Adjusted for container padding
+    height: 45, // Reduced from 60
     backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
-    marginBottom: 12,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: "#e2e8f0",
   },
-  numButtonText: { fontSize: 24, fontWeight: "bold", color: "#0f172a" },
+  numButtonText: { fontSize: 20, fontWeight: "bold", color: "#0f172a" },
   clearButton: { backgroundColor: "#fff1f2" },
   clearText: { color: "#e11d48" },
   backButtonPad: { backgroundColor: "#fff7ed" },
   actionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   actionButton: {
     flex: 1,
-    height: 60,
+    height: 40, // Reduced from 60
     backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
@@ -293,16 +397,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e2e8f0",
   },
-  actionText: { fontSize: 11, color: "#64748b", marginTop: 4 },
+  actionText: { fontSize: 10, color: "#64748b", marginTop: 2 },
   reportButton: { borderColor: "#fdba74" },
   navRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 8,
+    paddingBottom: 20, // Bottom breathing room
   },
   navBtn: {
     flex: 1,
-    height: 50,
+    height: 48,
     borderRadius: 8,
     flexDirection: "row",
     alignItems: "center",
@@ -310,9 +414,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   prevBtn: { backgroundColor: "white", borderWidth: 1, borderColor: "#e2e8f0" },
-  prevBtnText: { color: "#64748b", marginLeft: 8, fontWeight: "600" },
+  prevBtnText: { color: "#64748b", fontWeight: "600" },
   validateBtn: { backgroundColor: "#10b981" },
-  validateText: { color: "white", marginLeft: 8, fontWeight: "600" },
+  validateText: { color: "white", fontWeight: "600" },
 });
 
 export default count;

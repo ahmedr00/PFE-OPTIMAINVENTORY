@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -10,174 +10,201 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useUserStore } from "../store/userStore";
 import { useSheetStore } from "../store/sheetStore";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 
-// Mock Components - Replace these with your actual Mobile UI components
+type SheetTask = {
+  _id: string;
+  name?: string;
+  status?: string;
+  priority?: string;
+  articles?: unknown[];
+  assignedCompteurs?: string[];
+  countedArticles?: number;
+  totalArticles?: number;
+  assignedDate?: string;
+  createdAt?: string;
+};
+
 const ProgressBar = ({ value }: { value: number }) => (
   <View style={styles.progressTrack}>
     <View style={[styles.progressFill, { width: `${value}%` }]} />
   </View>
 );
 
-const Badge = ({ children, style }: any) => (
-  <View style={[styles.badge, style]}>
-    <Text style={styles.badgeText}>{children}</Text>
+const Badge = ({ label, backgroundColor, color }: any) => (
+  <View style={[styles.badge, { backgroundColor }]}>
+    <Text style={[styles.badgeText, { color }]}>{label}</Text>
   </View>
 );
 
+const getTotalArticles = (task: SheetTask) =>
+  task.totalArticles || task.articles?.length || 0;
+
+const getProgress = (task: SheetTask) => {
+  const totalArticles = getTotalArticles(task);
+  if (!totalArticles) return 0;
+
+  return Math.round(((task.countedArticles || 0) / totalArticles) * 100);
+};
+
+const getStatusLabel = (status?: string) => {
+  switch (status) {
+    case "completed":
+    case "complete":
+    case "Complété":
+      return "Complété";
+    case "pending":
+      return "En attente";
+    case "in_progress":
+    case "En cours":
+    default:
+      return "En cours";
+  }
+};
+
+const isTaskCompleted = (task: SheetTask) =>
+  getStatusLabel(task.status) === "Complété" || getProgress(task) >= 100;
+
+const getAssignedDate = (task: SheetTask) => {
+  if (task.assignedDate) return task.assignedDate;
+  if (!task.createdAt) return "date inconnue";
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(task.createdAt));
+};
+
+const getPriorityStyle = (priority?: string) => {
+  switch (priority) {
+    case "Haute":
+      return { backgroundColor: "#fee2e2", color: "#b91c1c", label: "Haute" };
+    case "Basse":
+      return { backgroundColor: "#f1f5f9", color: "#334155", label: "Basse" };
+    case "Normale":
+    default:
+      return { backgroundColor: "#dbeafe", color: "#1d4ed8", label: "Normale" };
+  }
+};
+
 const home = () => {
   const router = useRouter();
-  const { user } = useUserStore();
-  const { sheets, fetchSheets } = useSheetStore();
+  const { user, isLoading: isAuthLoading, hasCheckedAuth } = useUserStore();
+  const { sheets, fetchSheets, loading, error } = useSheetStore();
+
   useEffect(() => {
     fetchSheets();
-  }, []);
+  }, [fetchSheets]);
 
-  // sheets.map((sheet) => {
-  //   if (sheet.assignedCompteurs.includes("ahmed")) {
-  //     console.log("ahahah", sheet);
-  //   }
-  // });
-  const tasks = sheets.filter((task) =>
-    task.assignedCompteurs?.includes("ahmed"),
+  const compteurName = user?.name || "ahmed";
+  const tasks: SheetTask[] = sheets.filter((task: SheetTask) =>
+    task.assignedCompteurs?.includes(compteurName),
   );
-  console.log(tasks);
-
-  // const tasks = [
-  //   {
-  //     id: "INV-2026-001",
-  //     name: "Inventaire Entrepôt A",
-  //     totalArticles: 450,
-  //     countedArticles: 293,
-  //     assignedDate: "01/04/2026",
-  //     status: "En cours",
-  //     priority: "Haute",
-  //   },
-  //   {
-  //     id: "INV-2026-002",
-  //     name: "Inventaire Magasin Principal",
-  //     totalArticles: 320,
-  //     countedArticles: 96,
-  //     assignedDate: "02/04/2026",
-  //     status: "En cours",
-  //     priority: "Normale",
-  //   },
-  //   {
-  //     id: "INV-2026-003",
-  //     name: "Contrôle Stock Mensuel",
-  //     totalArticles: 180,
-  //     countedArticles: 180,
-  //     assignedDate: "28/03/2026",
-  //     status: "Complété",
-  //     priority: "Basse",
-  //   },
-  // ];
-
-  const getProgress = (task: any) =>
-    Math.round((task.countedArticles / task.totalArticles) * 100);
-
-  const getPriorityStyle = (priority: string) => {
-    switch (priority) {
-      case "Haute":
-        return { backgroundColor: "#fee2e2", color: "#b91c1c" };
-      case "Normale":
-        return { backgroundColor: "#dbeafe", color: "#1d4ed8" };
-      default:
-        return { backgroundColor: "#f1f5f9", color: "#334155" };
-    }
-  };
+  const activeTasks = tasks.filter((task) => !isTaskCompleted(task));
+  const totalCountedArticles = tasks.reduce(
+    (total, task) => total + (task.countedArticles || 0),
+    0,
+  );
+  const totalArticles = tasks.reduce(
+    (total, task) => total + getTotalArticles(task),
+    0,
+  );
+  const completionRate = totalArticles
+    ? Math.round((totalCountedArticles / totalArticles) * 100)
+    : 0;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f8fafc" }}>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Welcome Section */}
         <View style={styles.headerCard}>
-          <Text style={styles.headerTitle}>Bienvenue,{user?.name}</Text>
+          <Text style={styles.headerTitle}>Bienvenue, {user?.name || "compteur"}</Text>
           <Text style={styles.headerSubtitle}>
-            Vous avez {tasks.filter((t) => t.status !== "Complété").length}{" "}
-            tâches en cours
+            Vous avez {activeTasks.length} tâches en cours
           </Text>
 
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>Articles Comptés</Text>
-              <Text style={styles.statValue}>569</Text>
+              <Text style={styles.statValue}>{totalCountedArticles}</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statLabel}>Taux de Complétion</Text>
-              <Text style={styles.statValue}>76%</Text>
+              <Text style={styles.statValue}>{completionRate}%</Text>
             </View>
           </View>
         </View>
 
-        {/* Tasks Section */}
         <Text style={styles.sectionTitle}>Mes Tâches Assignées</Text>
+
+        {(loading || (isAuthLoading && !hasCheckedAuth)) && (
+          <Text style={styles.stateText}>Chargement des tâches...</Text>
+        )}
+        {!!error && !loading && <Text style={styles.errorText}>{error}</Text>}
+        {!loading &&
+          !error &&
+          hasCheckedAuth &&
+          tasks.length === 0 && (
+          <Text style={styles.stateText}>Aucune tâche assignée pour le moment.</Text>
+        )}
 
         {tasks.map((task) => {
           const progress = getProgress(task);
-          const isCompleted = task.status === "Complété";
+          const isCompleted = isTaskCompleted(task);
           const priorityStyles = getPriorityStyle(task.priority);
+          const statusLabel = isCompleted ? "Complété" : getStatusLabel(task.status);
+          const totalTaskArticles = getTotalArticles(task);
 
           return (
             <TouchableOpacity
               key={task._id}
               style={styles.taskCard}
-              //   onPress={() => !isCompleted && router.push(`/mobile/count/${task.id}`)}
+              onPress={() =>
+                !isCompleted &&
+                router.push({
+                  pathname: "/count",
+                  params: { id: task._id },
+                })
+              }
               activeOpacity={0.7}
+              disabled={isCompleted}
             >
               <View style={styles.cardHeader}>
                 <View style={{ flex: 1 }}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <Text style={styles.taskName}>{task.name}</Text>
-                    {/* {isCompleted && <CheckCircle size={16} color="#22c55e" />} */}
+                  <View style={styles.taskNameRow}>
+                    <Text style={styles.taskName}>
+                      {task.name || "Inventaire sans nom"}
+                    </Text>
+                    {isCompleted && (
+                      <Feather name="check-circle" size={16} color="#22c55e" />
+                    )}
                   </View>
                   <Text style={styles.taskId}>ID: {task._id}</Text>
                 </View>
-                {/* {!isCompleted && <ChevronRight size={20} color="#94a3b8" />} */}
+                {!isCompleted && (
+                  <Feather name="chevron-right" size={20} color="#94a3b8" />
+                )}
               </View>
 
               <View style={styles.badgeRow}>
                 <Badge
-                  style={{ backgroundColor: priorityStyles.backgroundColor }}
-                >
-                  <Text style={{ color: priorityStyles.color, fontSize: 12 }}>
-                    {task.priority}
-                  </Text>
-                </Badge>
+                  label={priorityStyles.label}
+                  backgroundColor={priorityStyles.backgroundColor}
+                  color={priorityStyles.color}
+                />
                 <Badge
-                  style={{
-                    backgroundColor: isCompleted ? "#dcfce7" : "#dbeafe",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: isCompleted ? "#15803d" : "#1d4ed8",
-                      fontSize: 12,
-                    }}
-                  >
-                    {task.status}
-                  </Text>
-                </Badge>
+                  label={statusLabel}
+                  backgroundColor={isCompleted ? "#dcfce7" : "#dbeafe"}
+                  color={isCompleted ? "#15803d" : "#1d4ed8"}
+                />
               </View>
 
               <View style={styles.progressContainer}>
                 <View style={styles.progressInfo}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
+                  <View style={styles.progressLabel}>
                     <Feather name="package" size={14} color="#64748b" />
                     <Text style={styles.progressText}>
-                      {task.countedArticles} / {task.articles.length} articles
+                      {task.countedArticles || 0} / {totalTaskArticles} articles
                     </Text>
                   </View>
                   <Text style={styles.progressPercent}>{progress}%</Text>
@@ -186,9 +213,9 @@ const home = () => {
               </View>
 
               <View style={styles.footer}>
-                {/* <Clock size={12} color="#94a3b8" /> */}
+                <Feather name="clock" size={12} color="#94a3b8" />
                 <Text style={styles.footerText}>
-                  Assigné le {task.assignedDate}
+                  Assigné le {getAssignedDate(task)}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -234,6 +261,18 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 12,
   },
+  stateText: {
+    color: "#64748b",
+    fontSize: 14,
+    paddingVertical: 12,
+    textAlign: "center",
+  },
+  errorText: {
+    color: "#b91c1c",
+    fontSize: 14,
+    paddingVertical: 12,
+    textAlign: "center",
+  },
   taskCard: {
     backgroundColor: "white",
     borderRadius: 16,
@@ -248,7 +287,12 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 12,
   },
-  taskName: { fontSize: 16, fontWeight: "bold", color: "#1e293b" },
+  taskNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  taskName: { flex: 1, fontSize: 16, fontWeight: "bold", color: "#1e293b" },
   taskId: { fontSize: 12, color: "#64748b", marginTop: 2 },
   badgeRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
   badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
@@ -258,6 +302,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 8,
+  },
+  progressLabel: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   progressText: { fontSize: 13, color: "#64748b" },
   progressPercent: { fontSize: 13, fontWeight: "bold", color: "#1e293b" },

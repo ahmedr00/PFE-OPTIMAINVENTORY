@@ -26,7 +26,7 @@ import { useUserStore } from "../store/userStore";
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("general");
   const { user } = useUserStore();
-  // const { updateUser } = useUserStore();
+  const { updateUser } = useUserStore();
 
   // General State
   const [name, setName] = useState(user?.name || "Marie Dubois");
@@ -41,17 +41,17 @@ const SettingsPage = () => {
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [syncNotifs, setSyncNotifs] = useState(true);
 
-  // const handleSaveGeneral = async () => {
-  //   setSaving(true);
-  //   try {
-  //     await updateUser({ _id: user._id, name });
-  //     Alert.alert("Succès", "Profil mis à jour avec succès");
-  //   } catch (err) {
-  //     Alert.alert("Erreur", "Échec de la mise à jour");
-  //   } finally {
-  //     setSaving(false);
-  //   }
-  // };
+  const handleSaveGeneral = async () => {
+    setSaving(true);
+    const result = await updateUser(name);
+    setSaving(false);
+
+    if (result.success) {
+      Alert.alert("Succès", "Profil mis à jour !");
+    } else {
+      Alert.alert("Erreur", result.message);
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -114,8 +114,8 @@ const SettingsPage = () => {
 
           <TouchableOpacity
             style={styles.saveButton}
-            // onPress={handleSaveGeneral}
-            // disabled={saving}
+            onPress={handleSaveGeneral}
+            disabled={saving}
           >
             {saving ? (
               <ActivityIndicator color="#fff" />
