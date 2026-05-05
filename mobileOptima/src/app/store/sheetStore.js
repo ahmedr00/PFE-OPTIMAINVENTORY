@@ -8,8 +8,9 @@ export const useSheetStore = create((set) => ({
   error: null,
   isLoading: false,
   updateArticleCount: async (sheetId, articleId, quantity) => {
+    console.log(sheetId, articleId, quantity);
     try {
-      const response = await axios.patch(
+      const response = await axios.put(
         `${API_URL_SHEET}/${sheetId}/articles/${articleId}/count`,
         { counted: quantity },
       );

@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useUserStore } from "../store/userStore";
+import { router } from "expo-router";
 export default function Profile() {
   const { logout, user } = useUserStore();
   const userProfile = {
@@ -24,6 +25,7 @@ export default function Profile() {
 
   const handleLogout = async () => {
     await logout();
+    router.push("/(auth)/login");
   };
   return (
     <SafeAreaView style={styles.safeArea}>

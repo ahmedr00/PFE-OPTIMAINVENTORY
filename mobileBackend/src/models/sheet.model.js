@@ -72,7 +72,9 @@ const sheetSchema = new mongoose.Schema(
 );
 
 sheetSchema.pre("validate", function normalizeSheetFields(next) {
-  this.assignedCompteurs = [...new Set((this.assignedCompteurs || []).filter(Boolean))];
+  this.assignedCompteurs = [
+    ...new Set((this.assignedCompteurs || []).filter(Boolean)),
+  ];
   this.totalArticles = this.totalArticles || this.articles?.length || 0;
   this.progress = this.totalArticles
     ? Math.round(((this.countedArticles || 0) / this.totalArticles) * 100)
@@ -81,8 +83,6 @@ sheetSchema.pre("validate", function normalizeSheetFields(next) {
   if (this.totalArticles > 0 && this.countedArticles >= this.totalArticles) {
     this.status = this.ecarts > 0 ? "in_progress" : "completed";
   }
-
-  next();
 });
 
 const Sheet = mongoose.model("Sheet", sheetSchema);
