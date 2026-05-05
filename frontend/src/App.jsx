@@ -7,7 +7,7 @@ import { Toaster } from "react-hot-toast";
 import LandingPage from "./Pages/LandingPage";
 import Dashboard from "./Pages/Dashboard";
 import InventorySheet from "./Pages/InventorySheets";
-import SyncSage from "./Pages/SyncSage";
+// import SyncSage from "./Pages/SyncSage";
 import Users from "./Pages/Users";
 import Reports from "./Pages/Reports";
 import SheetDetails from "./Pages/SheetDetails";

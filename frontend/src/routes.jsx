@@ -22,6 +22,8 @@ import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
 import ProfileInfoPage from "./Pages/ProfileInfoPage";
 import SettingsPage from "./Pages/SettingsPage";
+import CompanyPage from "./Pages/CompanyPage";
+import WarehousePage from "./Pages/WarehousePage";
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) {
@@ -114,6 +116,22 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "company",
+        element: (
+          <ProtectedRoute>
+            <CompanyPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "depots",
+        element: (
+          <ProtectedRoute>
+            <WarehousePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "sheets",
         element: (
           <ProtectedRoute>
@@ -168,7 +186,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "settings",
-        element: <SettingsPage />,
+        element: (
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        ),
       },
     ],
   },

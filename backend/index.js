@@ -7,6 +7,8 @@ import authRoutes from "./routes/auth.route.js";
 import sheetsRoutes from "./routes/sheets.route.js";
 import userRoutes from "./routes/user.route.js";
 import articleRoutes from "./routes/article.route.js";
+import warehouseRoutes from "./routes/warehouse.route.js";
+import companyRoutes from "./routes/company.route.js";
 
 dotenv.config();
 const app = express();
@@ -18,6 +20,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/sheets", sheetsRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/articles", articleRoutes);
+app.use("/api/warehouse", warehouseRoutes);
+app.use("/api/company", companyRoutes);
 
 app.listen(PORT, () => {
   connectDB();

@@ -2,11 +2,13 @@ import {
   Bell,
   ClipboardList,
   FileText,
+  House,
   LayoutDashboard,
   LogOut,
   Package,
   RefreshCw,
   Users,
+  Warehouse,
 } from "lucide-react";
 import React from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
@@ -23,6 +25,16 @@ const DashboardLayout = () => {
       icon: <LayoutDashboard className="w-5 h-5" />,
       label: "Tableau de bord",
       exact: true,
+    },
+    {
+      path: "/app/company",
+      icon: <House className="w-5 h-5" />,
+      label: "Entreprise",
+    },
+    {
+      path: "/app/depots",
+      icon: <Warehouse className="w-5 h-5" />,
+      label: "Depots",
     },
     {
       path: "/app/sheets",

@@ -1,7 +1,7 @@
 import fs from "fs";
 import csv from "csv-parser";
 import Sheet from "../models/sheet.model.js";
-import Article from "../models/article.model.js";
+import { Article } from "../models/article.model.js";
 
 export const getAllSheets = async (req, res) => {
   try {
